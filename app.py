@@ -1,10 +1,11 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import ephem
-from datetime import datetime, timedelta
+from datetime import datetime
 import tkinter as tk
 from tkinter import ttk
 from tkcalendar import DateEntry
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 def get_moon_phase(date=None):
     # Si no se proporciona una fecha, usa la actual
@@ -43,9 +44,11 @@ def get_moon_phase(date=None):
     
     return phase_name, phase, date_str, day, month, year, hour
 
-def draw_moon_phase(phase, day, month, year, hour):
+def draw_moon_phase(phase, day, month, year, hour, ax):
+    # Limpiar el gráfico existente
+    ax.clear()
+
     # Dibuja la fase de la luna con diseño atractivo
-    fig, ax = plt.subplots(figsize=(6, 6))  # Tamaño aumentado
     ax.set_xlim(-1, 1)
     ax.set_ylim(-1, 1)
     
@@ -53,7 +56,6 @@ def draw_moon_phase(phase, day, month, year, hour):
     dark_color = '#001f3f'  # Color oscuro para simular la noche
 
     # Establece el color del fondo del canvas y el gráfico
-    fig.patch.set_facecolor(dark_color)
     ax.set_facecolor(dark_color)
 
     # Crea un círculo para la luna
@@ -75,7 +77,7 @@ def draw_moon_phase(phase, day, month, year, hour):
 
     ax.set_aspect('equal')
     ax.axis('off')  # Oculta los ejes
-    plt.title(f"Fase de la Luna: {phase}", fontsize=16, color='white', fontweight='bold', family='sans-serif')
+    ax.set_title(f"Fase de la Luna: {phase}", fontsize=16, color='white', fontweight='bold', family='sans-serif')
 
     # Información organizada con sombras y esquinas redondeadas
     ax.text(0, -0.8, f"Fecha: {day} {month} {year}", ha='center', fontsize=12, color='white', fontweight='light')
@@ -88,16 +90,7 @@ def draw_moon_phase(phase, day, month, year, hour):
     # Añadir un toque decorativo
     ax.plot([-1, 1], [1, 1], color='white', linewidth=3)  # Línea decorativa en la parte superior
 
-    plt.show()
-
-def moon_phase_info(phase):
-    info = {
-        'Nueva': "La luna nueva es el inicio del ciclo lunar. Es un buen momento para iniciar nuevos proyectos.",
-        'Creciente': "La luna creciente simboliza el crecimiento y la expansión. Es un buen momento para hacer planes y avanzar en proyectos.",
-        'Llena': "La luna llena representa la culminación y la plenitud. Es un buen momento para reflexionar y agradecer.",
-        'Menguante': "La luna menguante es un tiempo de liberación y finalización. Es un buen momento para dejar ir lo que ya no sirve."
-    }
-    return info.get(phase, "Fase lunar desconocida.")
+    ax.figure.canvas.draw()  # Actualiza el gráfico
 
 def season(month):
     if month in ["December", "January", "February"]:
@@ -110,16 +103,14 @@ def season(month):
         return "Otoño"
 
 # Función que se llamará al seleccionar una nueva fecha
-def on_date_change(selected_date):
-    global result_label  # Asegura que result_label sea global para ser accesible en esta función
+def on_date_change(selected_date, ax, result_label):
     phase_name, phase_degree, date_str, day, month, year, hour = get_moon_phase(selected_date)
     current_season = season(month)
     
     result_label.config(text=f"Fecha: {day} {month} {year}, Hora: {hour}\nFase lunar: {phase_name} (Grados: {phase_degree:.2f})\nEstación: {current_season}")
-    draw_moon_phase(phase_name, day, month, year, hour)
+    draw_moon_phase(phase_name, day, month, year, hour, ax)
 
 def main():
-    global result_label  # Asegura que result_label sea accesible en todo el programa
     root = tk.Tk()
     root.title("Fase Lunar")
     
@@ -142,11 +133,19 @@ def main():
     date_entry.grid(column=1, row=1, sticky=tk.W)
 
     # Botón para calcular la fase lunar de la fecha seleccionada
-    calc_button = ttk.Button(frame, text="Mostrar Fase Lunar", command=lambda: on_date_change(date_entry.get_date().strftime('%Y-%m-%d')))
+    calc_button = ttk.Button(frame, text="Mostrar Fase Lunar")
     calc_button.grid(column=2, row=1, sticky=tk.W)
 
-    # Mostrar la fase lunar inicial (hoy)
-    draw_moon_phase(phase_name, day, month, year, hour)
+    # Crear la figura de Matplotlib para la luna
+    fig, ax = plt.subplots(figsize=(6, 6))
+    canvas = FigureCanvasTkAgg(fig, master=root)  # Colocar la figura en tkinter
+    canvas.get_tk_widget().grid(row=1, column=0)
+
+    # Dibuja la fase de la luna inicial (hoy)
+    draw_moon_phase(phase_name, day, month, year, hour, ax)
+
+    # Asociar el botón con la función de actualización de la fase lunar
+    calc_button.config(command=lambda: on_date_change(date_entry.get_date().strftime('%Y-%m-%d'), ax, result_label))
 
     root.mainloop()
 
