@@ -1,11 +1,16 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import ephem
-from datetime import datetime
+from datetime import datetime, timedelta
 
-def get_moon_phase():
-    # Obtiene la fecha y hora actual
-    now = datetime.now()
+def get_moon_phase(date=None):
+    # Si no se proporciona una fecha, usa la actual
+    if date is None:
+        now = datetime.now()
+    else:
+        now = datetime.strptime(date, "%Y-%m-%d")
+        now = now.replace(hour=12, minute=0, second=0)  # Configura la hora a las 12:00
+
     date_str = now.strftime("%Y-%m-%d %H:%M:%S")
     
     # Extrae detalles de la fecha
@@ -35,7 +40,7 @@ def get_moon_phase():
     
     return phase_name, phase, date_str, day, month, year, hour
 
-def draw_moon_phase(phase):
+def draw_moon_phase(phase, day, month, year, hour):
     # Dibuja la fase de la luna con diseño atractivo
     fig, ax = plt.subplots(figsize=(6, 6))  # Tamaño aumentado
     ax.set_xlim(-1, 1)
@@ -101,13 +106,32 @@ def season(month):
     else:
         return "Otoño"
 
+def main():
+    while True:
+        # Solicita al usuario si desea ingresar una fecha
+        user_input = input("Ingrese una fecha (YYYY-MM-DD) o presione Enter para usar la fecha actual: ").strip()
+
+        if user_input == '':
+            # Usa la fecha actual
+            phase_name, phase_degree, date_str, day, month, year, hour = get_moon_phase()
+        else:
+            try:
+                # Verifica si el formato es correcto
+                datetime.strptime(user_input, "%Y-%m-%d")
+                # Usa la fecha proporcionada
+                phase_name, phase_degree, date_str, day, month, year, hour = get_moon_phase(user_input)
+            except ValueError:
+                print("Formato de fecha inválido. Intente de nuevo.")
+                continue
+        
+        current_season = season(month)
+        
+        print(f"\nFecha y hora: {date_str}")
+        print(f"Fase lunar: {phase_name} (Grados: {phase_degree:.2f})")
+        print(f"Día: {day}, Mes: {month}, Año: {year}, Hora: {hour}, Estación: {current_season}")
+        print(moon_phase_info(phase_name))
+        
+        draw_moon_phase(phase_name, day, month, year, hour)
+
 if __name__ == "__main__":
-    phase_name, phase_degree, date_str, day, month, year, hour = get_moon_phase()
-    current_season = season(month)
-    
-    print(f"Fecha y hora actual: {date_str}")
-    print(f"Fase lunar actual: {phase_name} (Grados: {phase_degree:.2f})")
-    print(f"Día: {day}, Mes: {month}, Año: {year}, Hora: {hour}, Estación: {current_season}")
-    print(moon_phase_info(phase_name))
-    
-    draw_moon_phase(phase_name)
+    main()
