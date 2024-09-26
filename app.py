@@ -114,21 +114,30 @@ def main():
     root = tk.Tk()
     root.title("Fase Lunar")
     
+    # Cambiar el color de fondo de la ventana
+    dark_color = '#001f3f'  # Color oscuro para simular la noche
+    root.configure(bg=dark_color)  # Cambiar el color de fondo de la ventana
+
     # Obtener la fase lunar para hoy al iniciar
     phase_name, phase_degree, date_str, day, month, year, hour = get_moon_phase()
     current_season = season(month)
 
     # Frame para mostrar la información de la luna
-    frame = ttk.Frame(root, padding="10")
+    frame = ttk.Frame(root, padding="10", style='TFrame')
     frame.grid(row=0, column=0, sticky=(tk.W, tk.E))
 
+    # Cambiar el color de fondo del frame
+    frame.configure(style='TFrame')
+    style = ttk.Style()
+    style.configure('TFrame', background=dark_color)
+
     # Mostrar la información de la fecha actual
-    ttk.Label(frame, text="Fecha actual:").grid(column=0, row=0, sticky=tk.W)
-    result_label = ttk.Label(frame, text=f"Fecha: {day} {month} {year}, Hora: {hour}\nFase lunar: {phase_name} (Grados: {phase_degree:.2f})\nEstación: {current_season}")
+    ttk.Label(frame, text="Fecha actual:", background=dark_color, foreground='white').grid(column=0, row=0, sticky=tk.W)
+    result_label = ttk.Label(frame, text=f"Fecha: {day} {month} {year}, Hora: {hour}\nFase lunar: {phase_name} (Grados: {phase_degree:.2f})\nEstación: {current_season}", background=dark_color, foreground='white')
     result_label.grid(column=1, row=0, sticky=tk.W)
 
     # Selector de fecha
-    ttk.Label(frame, text="Seleccionar fecha:").grid(column=0, row=1, sticky=tk.W)
+    ttk.Label(frame, text="Seleccionar fecha:", background=dark_color, foreground='white').grid(column=0, row=1, sticky=tk.W)
     date_entry = DateEntry(frame, width=12, background='darkblue', foreground='white', borderwidth=2, date_pattern='y-mm-dd')
     date_entry.grid(column=1, row=1, sticky=tk.W)
 
@@ -138,8 +147,12 @@ def main():
 
     # Crear la figura de Matplotlib para la luna
     fig, ax = plt.subplots(figsize=(6, 6))
+    fig.patch.set_facecolor('#001f3f')  # Establece el color de fondo de la figura
     canvas = FigureCanvasTkAgg(fig, master=root)  # Colocar la figura en tkinter
     canvas.get_tk_widget().grid(row=1, column=0)
+
+    # Cambiar el color de fondo del canvas
+    canvas.get_tk_widget().configure(bg=dark_color)
 
     # Dibuja la fase de la luna inicial (hoy)
     draw_moon_phase(phase_name, day, month, year, hour, ax)
