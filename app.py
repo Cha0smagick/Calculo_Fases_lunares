@@ -2,6 +2,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import ephem
 from datetime import datetime, timedelta
+import tkinter as tk
+from tkinter import ttk
+from tkcalendar import DateEntry
 
 def get_moon_phase(date=None):
     # Si no se proporciona una fecha, usa la actual
@@ -106,32 +109,46 @@ def season(month):
     else:
         return "Otoño"
 
-def main():
-    while True:
-        # Solicita al usuario si desea ingresar una fecha
-        user_input = input("Ingrese una fecha (YYYY-MM-DD) o presione Enter para usar la fecha actual: ").strip()
+# Función que se llamará al seleccionar una nueva fecha
+def on_date_change(selected_date):
+    global result_label  # Asegura que result_label sea global para ser accesible en esta función
+    phase_name, phase_degree, date_str, day, month, year, hour = get_moon_phase(selected_date)
+    current_season = season(month)
+    
+    result_label.config(text=f"Fecha: {day} {month} {year}, Hora: {hour}\nFase lunar: {phase_name} (Grados: {phase_degree:.2f})\nEstación: {current_season}")
+    draw_moon_phase(phase_name, day, month, year, hour)
 
-        if user_input == '':
-            # Usa la fecha actual
-            phase_name, phase_degree, date_str, day, month, year, hour = get_moon_phase()
-        else:
-            try:
-                # Verifica si el formato es correcto
-                datetime.strptime(user_input, "%Y-%m-%d")
-                # Usa la fecha proporcionada
-                phase_name, phase_degree, date_str, day, month, year, hour = get_moon_phase(user_input)
-            except ValueError:
-                print("Formato de fecha inválido. Intente de nuevo.")
-                continue
-        
-        current_season = season(month)
-        
-        print(f"\nFecha y hora: {date_str}")
-        print(f"Fase lunar: {phase_name} (Grados: {phase_degree:.2f})")
-        print(f"Día: {day}, Mes: {month}, Año: {year}, Hora: {hour}, Estación: {current_season}")
-        print(moon_phase_info(phase_name))
-        
-        draw_moon_phase(phase_name, day, month, year, hour)
+def main():
+    global result_label  # Asegura que result_label sea accesible en todo el programa
+    root = tk.Tk()
+    root.title("Fase Lunar")
+    
+    # Obtener la fase lunar para hoy al iniciar
+    phase_name, phase_degree, date_str, day, month, year, hour = get_moon_phase()
+    current_season = season(month)
+
+    # Frame para mostrar la información de la luna
+    frame = ttk.Frame(root, padding="10")
+    frame.grid(row=0, column=0, sticky=(tk.W, tk.E))
+
+    # Mostrar la información de la fecha actual
+    ttk.Label(frame, text="Fecha actual:").grid(column=0, row=0, sticky=tk.W)
+    result_label = ttk.Label(frame, text=f"Fecha: {day} {month} {year}, Hora: {hour}\nFase lunar: {phase_name} (Grados: {phase_degree:.2f})\nEstación: {current_season}")
+    result_label.grid(column=1, row=0, sticky=tk.W)
+
+    # Selector de fecha
+    ttk.Label(frame, text="Seleccionar fecha:").grid(column=0, row=1, sticky=tk.W)
+    date_entry = DateEntry(frame, width=12, background='darkblue', foreground='white', borderwidth=2, date_pattern='y-mm-dd')
+    date_entry.grid(column=1, row=1, sticky=tk.W)
+
+    # Botón para calcular la fase lunar de la fecha seleccionada
+    calc_button = ttk.Button(frame, text="Mostrar Fase Lunar", command=lambda: on_date_change(date_entry.get_date().strftime('%Y-%m-%d')))
+    calc_button.grid(column=2, row=1, sticky=tk.W)
+
+    # Mostrar la fase lunar inicial (hoy)
+    draw_moon_phase(phase_name, day, month, year, hour)
+
+    root.mainloop()
 
 if __name__ == "__main__":
     main()
